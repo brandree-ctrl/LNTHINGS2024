@@ -1,0 +1,77 @@
+from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup as soup
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+from selenium.webdriver.firefox.options import Options
+import lxml
+import bs4.element
+from urllib.parse import *
+import json
+import csv
+import requests
+import time
+
+
+def baseball_links():
+    used = []
+    wax_link = []
+    driver.get("https://members.baseballfactory.com/recruiters/search_results.asp?uid=7558&search=basic&player_name=&state=MT&grad_year=2021&position=&Submit=SEARCH")
+    elems = driver.find_elements_by_xpath("//a[@href]")
+    for elem in elems:
+        wax = elem.get_attribute("href")
+        waxs = wax_link.append(wax)
+        #unique = [used.append(wax) for elem in elems if wax_link not in used]
+
+    return wax_link
+
+
+FirefoxOptions = Options()
+FirefoxOptions.add_argument("-headless")
+driver = webdriver.Firefox(executable_path='geckodriver', options=FirefoxOptions)
+driver.get("https://www.baseballfactory.com/login/")
+
+PrepUsername = "jrobinson@tcspostgrad.com"
+PrepPassword = "2015tcs"
+
+emailFieldID = "#coach-username"
+passFieldID = "#coach-password"
+loginButton = "#coach-login"
+
+emailFieldElement = WebDriverWait(driver, 20).until(
+    lambda driver: driver.find_element_by_css_selector(emailFieldID))
+passFieldElement = WebDriverWait(driver, 25).until(
+    lambda driver: driver.find_element_by_css_selector(passFieldID))
+loginFieldElement = WebDriverWait(driver, 30).until(
+    lambda driver: driver.find_element_by_css_selector(loginButton))
+print("Running!")
+emailFieldElement.clear()
+emailFieldElement.send_keys(PrepUsername)
+passFieldElement.clear()
+passFieldElement.send_keys(PrepPassword)
+loginFieldElement.click()
+
+file = open('/Users/brandree/Create/BaseballFactory_2021/baseball_factoryMT_2021.txt', 'a')
+for link in baseball_links():
+    print(".........Getting Profile!!!!!!")
+    if "login" not in link:
+        driver.get(link)
+        dash = driver.page_source
+        player_id = soup(dash, "lxml")
+        try:
+            contact = player_id.find("div", {"class": "contact-info"})
+            players = contact.text
+            contact_info = players.replace("\n", ";").replace(
+                ",", ";").replace("MT", "MT" + ";")
+            print(contact_info)
+            file.write(contact_info)
+            file.write('\n')
+            file.close()
+            file = open('/Users/brandree/Create/BaseballFactory_2021/baseball_factoryMT_2021.txt', 'a')
+        except:
+            pass
+
+
+driver.close()
